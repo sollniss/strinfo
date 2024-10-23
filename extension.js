@@ -81,6 +81,11 @@ function activate(context) {
 function updateConfig() {
 	map = vscode.workspace.getConfiguration("strinfo.mappings");
 
+	if (!map) {
+		regexStr = null;
+		return
+	}
+
 	let s = ""
 	for (const [key, value] of Object.entries(map)) {
 		s += key + "|"
@@ -99,6 +104,10 @@ module.exports = {
 let regexStr = null;
 const mappingLense = {
   provideCodeLenses: function (document, token) {
+		if (!regexStr) {
+			return [];
+		}
+
 		let codeLenses = [];
 		const regex = new RegExp(regexStr, 'g');
 		const text = document.getText();
