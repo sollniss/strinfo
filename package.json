@@ -11,17 +11,25 @@
   ],
   "activationEvents": [ "onStartupFinished" ],
   "main": "./extension.js",
-  "contributes": {
-    "commands": [{
-      "command": "strinfo.helloWorld",
-      "title": "Hello World"
-    }]
-  },
   "scripts": {
     "lint": "eslint .",
     "pretest": "npm run lint",
     "test": "vscode-test"
   },
+	"contributes": {
+		"configuration": {
+			"title": "strinfo",
+			"properties": {
+				"strinfo.mappings": {
+					"type": "object",
+					"default": {
+						"some string": "some output"
+					},
+					"description": "A map of strings and their description"
+				}
+			}
+		}
+	},
   "devDependencies": {
     "@types/vscode": "^1.94.0",
     "@types/mocha": "^10.0.9",
