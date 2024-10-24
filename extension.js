@@ -2,83 +2,29 @@
 // Import the module and reference it with the alias vscode in your code below
 const vscode = require('vscode');
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
-
-let statusBarItem = null;
 let map = null;
+let regexStr = null;
 
 /**
  * @param {vscode.ExtensionContext} context
  */
 function activate(context) {
 
-	updateConfig();
-
-	// Create status bar item.
-	statusBarItem = vscode.window.createStatusBarItem(
-		vscode.StatusBarAlignment.Right,
-		10000
-	);
-
-	context.subscriptions.push(statusBarItem);
+	updateMappings();
 
 	// Update out map on configuration changes.
 	context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
 		if (e.affectsConfiguration("strinfo.mappings")) {
-			updateConfig();
+			updateMappings();
 		}
 	}));
 
-	// Handle text highlight.
-	context.subscriptions.push(vscode.window.onDidChangeTextEditorSelection(e => {
-		if (!map) {
-			statusBarItem.hide();
-			return
-		}
-
-		if (!e.selections) {
-			statusBarItem.hide();
-			return;
-		}
-		if (e.selections.length === 0) {
-			statusBarItem.hide();
-			return;
-		}
-		if (!e.textEditor) {
-			statusBarItem.hide();
-			return;
-		}
-		const selection = e.selections[0];
-
-		if (!selection || selection.isEmpty) {
-			statusBarItem.hide();
-			return;
-		}
-
-		// Not sure if this is required, getText also accepts a selection object.
-		const selectionRange = new vscode.Range(
-			selection.start.line, 
-			selection.start.character, 
-			selection.end.line, 
-			selection.end.character,
-		);
-		const text = e.textEditor.document.getText(selectionRange);
-		
-		if (map[text] === undefined) {
-			statusBarItem.hide();
-			return;
-		}
-		
-		statusBarItem.text = map[text]
-		statusBarItem.show();
-	}));
-
-	// Code lense
-	vscode.languages.registerCodeLensProvider("*", mappingLense);
+	context.subscriptions.push(new SelectionDisplay());
+	context.subscriptions.push(new CodeLensDisplay());
+	context.subscriptions.push(new TooltipDisplay());
 }
 
-function updateConfig() {
+function updateMappings() {
 	map = vscode.workspace.getConfiguration("strinfo.mappings");
 
 	if (!map) {
@@ -86,6 +32,7 @@ function updateConfig() {
 		return
 	}
 
+	// Build regex like "key1|key2|key3".
 	let s = ""
 	for (const [key, value] of Object.entries(map)) {
 		s += key + "|"
@@ -93,7 +40,6 @@ function updateConfig() {
 	regexStr = s.substring(0, s.length - 1);
 }
 
-// This method is called when your extension is deactivated
 function deactivate() {}
 
 module.exports = {
@@ -101,9 +47,155 @@ module.exports = {
 	deactivate
 }
 
-let regexStr = null;
-const mappingLense = {
-  provideCodeLenses: function (document, token) {
+function getDisplayString(text, markdown = false) {
+	if (!map) {
+		return null;
+	}
+
+	if (!map[text]) {
+		return null;
+	}
+
+	const el = map[text];
+	if (typeof el === 'string' || el instanceof String) {
+		return el !== "" ? el : null;
+	}
+
+	if (markdown === true && el.markdown !== "") {
+		return el.markdown;
+	} else {
+		return el.plain !== "" ? el.plain : null;
+	}
+}
+
+class SelectionDisplay {
+	constructor() {
+		this.getConfig(null);
+		this.settingsListener = vscode.workspace.onDidChangeConfiguration(this.getConfig);
+	}
+
+	getConfig = (e) => {
+		const config = "showStatusBar";
+
+		if (e == null || (e && e.affectsConfiguration("strinfo."+config))) {
+			const enabled = vscode.workspace.getConfiguration("strinfo").get(config);
+			if (enabled === true) {
+				this.enable();
+			} else {
+				this.disable();
+			}
+		}
+	}
+
+	enable = () => {
+		if (!this.statusBarItem) {
+			this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 10000);
+		}
+		if (!this.selectionEventListener) {
+			this.selectionEventListener = vscode.window.onDidChangeTextEditorSelection(this.selectionHandler);
+		}
+	}
+
+	disable = () => {
+		if (this.statusBarItem) { 
+			this.statusBarItem.dispose();
+			this.statusBarItem = null;
+		}
+		if (this.selectionEventListener) { 
+			this.selectionEventListener.dispose(); 
+			this.selectionEventListener = null;
+		}
+	}
+
+	dispose = () => {
+		this.settingsListener.dispose();
+		this.disable()
+	}
+
+	selectionHandler = (e) => {
+		if (!this.statusBarItem) {
+			console.error("handler called but statusBarItem not initialized");
+			return;
+		}
+
+		if (!map) {
+			this.statusBarItem.hide();
+			return
+		}
+
+		if (!e.selections) {
+			this.statusBarItem.hide();
+			return;
+		}
+
+		if (e.selections.length === 0) {
+			this.statusBarItem.hide();
+			return;
+		}
+
+		if (!e.textEditor) {
+			this.statusBarItem.hide();
+			return;
+		}
+
+		const selection = e.selections[0];
+
+		if (!selection || selection.isEmpty) {
+			this.statusBarItem.hide();
+			return;
+		}
+
+		const text = e.textEditor.document.getText(selection);
+
+		const disp = getDisplayString(text);
+		if (disp === null) {
+			this.statusBarItem.hide();
+			return;
+		}
+		
+		this.statusBarItem.text = disp
+		this.statusBarItem.show();
+	}
+}
+
+class CodeLensDisplay {
+	constructor() {
+		this.getConfig(null);
+		this.settingsListener = vscode.workspace.onDidChangeConfiguration(this.getConfig);
+	}
+
+	getConfig = (e) => {
+		const config = "showCodelens";
+
+		if (e == null || (e && e.affectsConfiguration("strinfo."+config))) {
+			const enabled = vscode.workspace.getConfiguration("strinfo").get(config);
+			if (enabled === true) {
+				this.enable();
+			} else {
+				this.disable();
+			}
+		}
+	}
+
+	enable = () => {
+		if (!this.codeLens) {
+			this.codeLens = vscode.languages.registerCodeLensProvider("*", { provideCodeLenses: this.codeLensHandler });
+		}
+	}
+
+	disable = () => {
+		if (this.codeLens) { 
+			this.codeLens.dispose();
+			this.codeLens = null;
+		}
+	}
+
+	dispose = () => {
+		this.settingsListener.dispose();
+		this.disable()
+	}
+
+	codeLensHandler = (document, token) => {
 		if (!regexStr) {
 			return [];
 		}
@@ -113,22 +205,83 @@ const mappingLense = {
 		const text = document.getText();
 		let matches;
 		while ((matches = regex.exec(text)) !== null) {
-			const line = document.lineAt(document.positionAt(matches.index).line);
-			const indexOf = line.text.indexOf(matches[0]);
-			const position = new vscode.Position(line.lineNumber, indexOf);
+			const disp = getDisplayString(matches[0]);
+			if (disp === null) {
+				continue;
+			}
+
+			const position = document.positionAt(matches.index);
 			const range = document.getWordRangeAtPosition(position, new RegExp(regexStr, 'g'));
 			if (range) {
 				codeLenses.push(new vscode.CodeLens(range, {
 					command: "workbench.action.findInFiles",
-					arguments: [
-						{
-							query: matches[0],
-						},
-					],
-					title: map[matches[0]],
+					arguments: [{ query: matches[0] }],
+					title: disp,
+					tooltip: "Search for this string",
 				}));
 			}
 		}
 		return codeLenses;
-  }
+	}
+}
+
+class TooltipDisplay {
+	constructor() {
+		this.getConfig(null);
+		this.settingsListener = vscode.workspace.onDidChangeConfiguration(this.getConfig);
+	}
+
+	getConfig = (e) => {
+		const config = "showTooltip";
+
+		if (e == null || (e && e.affectsConfiguration("strinfo."+config))) {
+			const enabled = vscode.workspace.getConfiguration("strinfo").get(config);
+			if (enabled === true) {
+				this.enable();
+			} else {
+				this.disable();
+			}
+		}
+	}
+
+	enable = () => {
+		if (!this.hover) {
+			this.hover = vscode.languages.registerHoverProvider("*", { provideHover: this.hoverHandler });
+		}
+	}
+
+	disable = () => {
+		if (this.hover) { 
+			this.hover.dispose();
+			this.hover = null;
+		}
+	}
+
+	dispose = () => {
+		this.settingsListener.dispose();
+		this.disable()
+	}
+
+	hoverHandler = (document, position, token) => {
+		if (!regexStr) {
+			return;
+		}
+
+		const range = document.getWordRangeAtPosition(position, new RegExp(regexStr, 'g'));
+		if (!range) {
+			return;
+		}
+
+		const text = document.getText(range);
+		const disp = getDisplayString(text, true);
+		if (disp === null) {
+			return;
+		}
+
+		const contents = new vscode.MarkdownString(disp);
+		contents.isTrusted = true;
+		contents.supportHtml = true;
+
+		return new vscode.Hover(contents);
+	}
 }
