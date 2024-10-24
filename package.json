@@ -25,8 +25,23 @@
 					"default": {
 						"some string": "some output"
 					},
-					"description": "A map of strings and their description"
-				}
+					"description": "A map of strings and their description."
+				},
+        "strinfo.showStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the string info in the status bar."
+        },
+        "strinfo.showTooltip": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the string info as a tooltip on hover."
+        },
+        "strinfo.showCodelens": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the string info as CodeLens."
+        }
 			}
 		}
 	},
