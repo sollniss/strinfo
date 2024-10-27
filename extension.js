@@ -25,7 +25,7 @@ function activate(context) {
 }
 
 function updateMappings() {
-	map = vscode.workspace.getConfiguration("strinfo.mappings");
+	map = vscode.workspace.getConfiguration("strinfo").mappings;
 
 	if (!map) {
 		regexStr = null;
@@ -75,10 +75,8 @@ class SelectionDisplay {
 	}
 
 	getConfig = (e) => {
-		const config = "showStatusBar";
-
-		if (e == null || (e && e.affectsConfiguration("strinfo."+config))) {
-			const enabled = vscode.workspace.getConfiguration("strinfo").get(config);
+		if (e == null || (e && e.affectsConfiguration("strinfo.showStatusBar"))) {
+			const enabled = vscode.workspace.getConfiguration("strinfo").showStatusBar;
 			if (enabled === true) {
 				this.enable();
 			} else {
@@ -165,10 +163,8 @@ class CodeLensDisplay {
 	}
 
 	getConfig = (e) => {
-		const config = "showCodelens";
-
-		if (e == null || (e && e.affectsConfiguration("strinfo."+config))) {
-			const enabled = vscode.workspace.getConfiguration("strinfo").get(config);
+		if (e == null || (e && e.affectsConfiguration("strinfo.showCodelens"))) {
+			const enabled = vscode.workspace.getConfiguration("strinfo").showCodelens;
 			if (enabled === true) {
 				this.enable();
 			} else {
@@ -232,10 +228,8 @@ class TooltipDisplay {
 	}
 
 	getConfig = (e) => {
-		const config = "showTooltip";
-
-		if (e == null || (e && e.affectsConfiguration("strinfo."+config))) {
-			const enabled = vscode.workspace.getConfiguration("strinfo").get(config);
+		if (e == null || (e && e.affectsConfiguration("strinfo.showTooltip"))) {
+			const enabled = vscode.workspace.getConfiguration("strinfo").showTooltip;
 			if (enabled === true) {
 				this.enable();
 			} else {
