@@ -2,13 +2,33 @@
   "name": "strinfo",
   "displayName": "strinfo",
   "description": "Annotating custom strings in your code.",
+  "icon": "icon.png",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.94.0"
   },
+  "publisher": "sollniss",
+  "author": {
+    "name": "sollniss"
+  },
+  "license": "MIT",
   "categories": [
     "Other"
   ],
+  "keywords": [
+    "string",
+    "annotation",
+    "custom",
+    "tooltip",
+    "codelens"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sollniss/strinfo"
+  },
+  "bugs": {
+    "url": "https://github.com/sollniss/strinfo/issues"
+  },
   "activationEvents": [ "onStartupFinished" ],
   "main": "./extension.js",
   "scripts": {
