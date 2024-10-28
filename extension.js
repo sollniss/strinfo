@@ -35,9 +35,13 @@ function updateMappings() {
 	// Build regex like "key1|key2|key3".
 	let s = ""
 	for (const [key, value] of Object.entries(map)) {
-		s += key + "|"
+		s += escapeRegex(key) + "|"
 	}
 	regexStr = s.substring(0, s.length - 1);
+}
+
+function escapeRegex(s) {
+    return s.replace(/[/\-\\^$*+?.()|[\]{}]/g, '\\$&');
 }
 
 function deactivate() {}
