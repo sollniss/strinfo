@@ -50,7 +50,7 @@
         "strinfo.showStatusBar": {
           "type": "boolean",
           "default": true,
-          "description": "Show the string info in the status bar."
+          "description": "Show the string info in the status bar on selection."
         },
         "strinfo.showTooltip": {
           "type": "boolean",
