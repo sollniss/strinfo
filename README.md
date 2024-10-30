@@ -1,4 +1,4 @@
-# strinfo README
+# strinfo
 
 Allows annotating custom strings via tooltip, CodeLens and the status bar.
 
@@ -17,5 +17,8 @@ Allows annotating custom strings via tooltip, CodeLens and the status bar.
     },
 }
 ```
+
+![Demo](https://raw.githubusercontent.com/sollniss/strinfo/main/demo.gif)
+
 You can either set one string for all display methods or specify a plain string and a different `markdown` one.
 The `markdown` is only used for tooltips. If `plain` is empty and `markdown` is set, CodeLens and status bar display are disabled.
